@@ -1,0 +1,40 @@
+# Virtual environment
+aburide-ag/
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local SQLite databases & journals
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Test caches & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & temporary files
+*.log
+*.tmp
+logs/
+
+# Secrets and environment configs
+.env
+.env.*
+secrets/
+
+# IDE / OS metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABURide • Fleet Administration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0F172A;
+    --surface: #1E293B;
+    --surface-2: #273449;
+    --border: #334155;
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --ok: #10B981;
+    --warn: #F59E0B;
+    --danger: #EF4444;
+    --primary: #38BDF8;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+
+    --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  [data-theme="light"] {
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-2: #E2E8F0;
+    --border: #CBD5E1;
+    --text: #0F172A;
+    --text-muted: #475569;
+    --ok: #059669;
+    --warn: #D97706;
+    --danger: #DC2626;
+    --primary: #0284C7;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 15px/1.5 var(--font-family);
+    min-height: 100vh;
+  }
+
+  .admin-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-md) var(--space-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .brand-badge {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .stat-val {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Controls Bar */
+  .controls-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+  }
+  .filters-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    flex: 1;
+  }
+  .search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-wrapper svg {
+    position: absolute;
+    left: 10px;
+    width: 16px;
+    height: 16px;
+    stroke: var(--text-muted);
+    fill: none;
+    stroke-width: 2;
+    pointer-events: none;
+  }
+  .search-wrapper input {
+    padding-left: 34px !important;
+  }
+  input, select, button {
+    font: inherit;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 8px 12px;
+  }
+  input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--ok);
+  }
+  .btn {
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: filter 120ms;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-primary { background: var(--ok); color: #FFF; border: none; }
+  .btn-warn { background: var(--warn); color: #000; border: none; }
+  .btn-danger { background: var(--danger); color: #FFF; border: none; }
+
+  /* Table styling */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  th {
+    background: var(--surface-2);
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .status-badge.Online { background: rgba(16, 185, 129, 0.15); color: var(--ok); border: 1px solid var(--ok); }
+  .status-badge.Offline { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border: 1px solid var(--border); }
+  .status-badge.Suspended { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    display: none;
+    place-content: center;
+    z-index: 50;
+    padding: var(--space-md);
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 460px;
+    padding: var(--space-xl);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .modal h2 { margin: 0 0 var(--space-md); font-size: 1.3rem; font-weight: 700; }
+  .form-group { margin-bottom: var(--space-md); }
+  .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; }
+
+  /* Auth screen */
+  #admin-auth-screen {
+    max-width: 420px;
+    margin: 80px auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .auth-shield-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .auth-shield-icon svg {
+    width: 28px;
+    height: 28px;
+    stroke: var(--primary);
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .auth-error {
+    display: none;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 14px;
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Admin App (Loaded strictly for verified administrators) -->
+  <div id="admin-app">
+    <header class="admin-header">
+      <div class="brand">
+        <span>ABURide</span>
+        <span class="brand-badge">Fleet Ops</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn" id="btn-theme" style="padding:6px 14px;display:flex;align-items:center;gap:6px">
+          <svg id="theme-btn-svg" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="5"></circle></svg>
+          <span id="theme-btn-text">Theme</span>
+        </button>
+        <button class="btn" id="btn-logout" style="padding:6px 14px">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- Stats KPIs -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Fleet</span>
+          <span class="stat-val" id="stat-total">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Online Active Now</span>
+          <span class="stat-val" id="stat-online" style="color:var(--ok)">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Suspended</span>
+          <span class="stat-val" id="stat-suspended" style="color:var(--danger)">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Campus Students Waiting</span>
+          <span class="stat-val" id="stat-waiting" style="color:var(--warn)">0</span>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section class="controls-bar">
+        <div class="filters-group">
+          <div class="search-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="filter-search" placeholder="Search driver name or plate…" style="min-width:240px">
+          </div>
+          <select id="filter-status">
+            <option value="all">All Statuses</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <select id="filter-type">
+            <option value="all">All Vehicles</option>
+            <option value="bus">Shuttle Buses</option>
+            <option value="keke">Tricycles (Keke)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-open-add-driver">+ Register Driver</button>
+      </section>
+
+      <!-- Drivers Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Driver / Token</th>
+              <th>Vehicle Type</th>
+              <th>Plate / Capacity</th>
+              <th>Current Campus Location</th>
+              <th>Last Active</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="drivers-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Loading campus drivers…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Driver Modal -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <h2>Register New Driver</h2>
+      <form id="add-driver-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="new-name" required placeholder="e.g. Driver Danladi">
+        </div>
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select id="new-vtype">
+            <option value="keke">Tricycle (Keke - 3 Seats)</option>
+            <option value="bus">Shuttle Bus (14 Seats)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plate Number</label>
+          <input type="text" id="new-plate" required placeholder="e.g. ABU-K-302">
+        </div>
+        <div class="form-group">
+          <label>Passenger Capacity</label>
+          <input type="number" id="new-capacity" required min="1" max="50" value="3">
+        </div>
+        <div class="form-group">
+          <label>Custom Token / Passkey (optional)</label>
+          <input type="text" id="new-token" placeholder="Leave blank to auto-generate">
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+          <button type="button" class="btn" id="btn-close-add">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Driver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+      <h2 id="confirm-title">Confirm Action</h2>
+      <p id="confirm-msg" style="color:var(--text-muted);margin-bottom:20px"></p>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" class="btn" id="btn-confirm-cancel">Cancel</button>
+        <button type="button" class="btn" id="btn-confirm-proceed">Proceed</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+let adminToken = localStorage.getItem('aburide_admin_token') || '';
+
+const $ = s => document.querySelector(s);
+
+async function api(path, options = {}) {
+  options.headers = options.headers || {};
+  if (adminToken) {
+    options.headers['X-Admin-Token'] = adminToken;
+  }
+  options.headers['Content-Type'] = 'application/json';
+  const res = await fetch(path, options);
+  if (res.status === 401 || res.status === 403 || res.status === 404) {
+    localStorage.removeItem('aburide_admin_token');
+    window.location.href = '/admin/login';
+    throw new Error('Unauthorized');
+  }
+  return res.json();
+}
+
+$('#btn-logout').onclick = async () => {
+  await fetch('/api/admin/auth/logout', { method: 'POST' }).catch(() => {});
+  localStorage.removeItem('aburide_admin_token');
+  window.location.href = '/';
+};
+
+// Theme toggle
+function initTheme() {
+  const th = localStorage.getItem('aburide_admin_theme') || 'dark';
+  applyTheme(th);
+}
+
+function applyTheme(th) {
+  document.documentElement.setAttribute('data-theme', th);
+  localStorage.setItem('aburide_admin_theme', th);
+  const isLight = th === 'light';
+  $('#theme-btn-text').textContent = isLight ? 'Dark' : 'Light';
+  const svg = $('#theme-btn-svg');
+  if (svg) {
+    svg.innerHTML = isLight 
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>' 
+      : '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>';
+  }
+}
+
+$('#btn-theme').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyTheme(cur);
+};
+
+async function refreshDashboard() {
+  try {
+    const [stats, drivers] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/drivers?' + new URLSearchParams({
+        status: $('#filter-status').value,
+        vehicle_type: $('#filter-type').value,
+        search: $('#filter-search').value
+      }))
+    ]);
+
+    $('#stat-total').textContent = stats.total_drivers;
+    $('#stat-online').textContent = stats.online_drivers;
+    $('#stat-suspended').textContent = stats.suspended_drivers;
+    $('#stat-waiting').textContent = stats.students_waiting;
+
+    renderDrivers(drivers);
+  } catch (err) {}
+}
+
+function renderDrivers(drivers) {
+  const tbody = $('#drivers-tbody');
+  if (!drivers.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">No drivers match your filters.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = drivers.map(d => {
+    const vlabel = d.vehicle_type === 'keke' ? 'Tricycle' : 'Shuttle Bus';
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:600">${escapeHtml(d.name)}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);font-family:monospace">${d.token || 'None'}</div>
+        </td>
+        <td>${vlabel}</td>
+        <td>
+          <div style="font-weight:600">${escapeHtml(d.plate)}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">${d.capacity} Seats</div>
+        </td>
+        <td>${escapeHtml(d.current_location)}</td>
+        <td style="font-variant-numeric:tabular-nums">${d.last_active}</td>
+        <td><span class="status-badge ${d.status}">${d.status}</span></td>
+        <td>
+          <div style="display:flex;gap:6px">
+            ${d.status === 'Suspended'
+              ? `<button class="btn btn-primary" onclick="reinstateDriver(${d.id})">Reinstate</button>`
+              : `<button class="btn btn-warn" onclick="promptSuspend(${d.id}, '${escapeHtml(d.name)}')">Suspend</button>`
+            }
+            <button class="btn btn-danger" onclick="promptRemove(${d.id}, '${escapeHtml(d.name)}')">Remove</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Modal handling
+$('#btn-open-add-driver').onclick = () => $('#add-modal').classList.add('open');
+$('#btn-close-add').onclick = () => $('#add-modal').classList.remove('open');
+$('#new-vtype').onchange = e => {
+  $('#new-capacity').value = e.target.value === 'keke' ? 3 : 14;
+};
+
+$('#add-driver-form').onsubmit = async e => {
+  e.preventDefault();
+  const payload = {
+    name: $('#new-name').value,
+    vehicle_type: $('#new-vtype').value,
+    capacity: +$('#new-capacity').value,
+    plate: $('#new-plate').value,
+    token: $('#new-token').value || undefined
+  };
+  try {
+    await api('/api/admin/drivers/add', { method: 'POST', body: JSON.stringify(payload) });
+    $('#add-modal').classList.remove('open');
+    $('#add-driver-form').reset();
+    refreshDashboard();
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+let confirmAction = null;
+function showConfirm(title, msg, onProceed, btnClass = 'btn-primary') {
+  $('#confirm-title').textContent = title;
+  $('#confirm-msg').textContent = msg;
+  const pBtn = $('#btn-confirm-proceed');
+  pBtn.className = 'btn ' + btnClass;
+  $('#confirm-modal').classList.add('open');
+  confirmAction = onProceed;
+}
+$('#btn-confirm-cancel').onclick = () => $('#confirm-modal').classList.remove('open');
+$('#btn-confirm-proceed').onclick = async () => {
+  if (confirmAction) await confirmAction();
+  $('#confirm-modal').classList.remove('open');
+};
+
+window.promptSuspend = (id, name) => {
+  showConfirm('Suspend Driver', `Are you sure you want to suspend ${name}? They will be immediately blocked from signing in or claiming rides.`, async () => {
+    await api(`/api/admin/drivers/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason: 'Admin suspension' }) });
+    refreshDashboard();
+  }, 'btn-warn');
+};
+
+window.reinstateDriver = async id => {
+  await api(`/api/admin/drivers/${id}/reinstate`, { method: 'POST' });
+  refreshDashboard();
+};
+
+window.promptRemove = (id, name) => {
+  showConfirm('Remove Driver', `Are you sure you want to remove ${name} from the active campus fleet?`, async () => {
+    await api(`/api/admin/drivers/${id}`, { method: 'DELETE' });
+    refreshDashboard();
+  }, 'btn-danger');
+};
+
+$('#filter-search').oninput = refreshDashboard;
+$('#filter-status').onchange = refreshDashboard;
+$('#filter-type').onchange = refreshDashboard;
+
+initTheme();
+adminToken ? showApp() : showAuth();
+setInterval(() => adminToken && refreshDashboard(), 5000);
+</script>
+</body>
+</html>

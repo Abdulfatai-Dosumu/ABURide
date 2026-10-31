@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABURide • Security Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0F172A;
+    --surface: #1E293B;
+    --surface-2: #273449;
+    --border: #334155;
+    --text: #F1F5F9;
+    --text-muted: #94A3B8;
+    --primary: #38BDF8;
+    --danger: #EF4444;
+    --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 60%), var(--bg);
+    color: var(--text);
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    text-align: center;
+  }
+  .shield-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .shield-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--primary);
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--text);
+  }
+  .meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 20px;
+  }
+  .alert {
+    display: none;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.84rem;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  input {
+    width: 100%;
+    height: 48px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 0 14px;
+    margin-bottom: 14px;
+    font-family: inherit;
+    text-align: center;
+  }
+  input:focus {
+    outline: 2px solid var(--primary);
+    border-color: var(--primary);
+  }
+  button {
+    width: 100%;
+    height: 48px;
+    background: var(--primary);
+    color: #0F172A;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter 120ms;
+  }
+  button:hover { filter: brightness(1.08); }
+</style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="shield-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+    </div>
+    <h1>Restricted Access</h1>
+    <p class="meta">Administrator Identity Verification</p>
+
+    <div id="alert-box" class="alert">Invalid credentials.</div>
+
+    <form id="login-form">
+      <input type="password" id="passkey" placeholder="Passkey" required autocomplete="off" />
+      <button type="submit" id="btn-submit">Verify Identity</button>
+    </form>
+  </div>
+
+<script>
+const form = document.getElementById('login-form');
+const passkey = document.getElementById('passkey');
+const btn = document.getElementById('btn-submit');
+const alertBox = document.getElementById('alert-box');
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const token = passkey.value.trim();
+  if (!token) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  alertBox.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 429) {
+      alertBox.textContent = 'Too many attempts. Please wait 60 seconds.';
+      alertBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Verify Identity';
+      return;
+    }
+    if (!res.ok) {
+      alertBox.textContent = 'Invalid credentials.';
+      alertBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Verify Identity';
+      return;
+    }
+
+    try { localStorage.setItem('aburide_admin_token', token); } catch(e){}
+    window.location.href = data.redirect || '/admin';
+  } catch (err) {
+    alertBox.textContent = 'Network error verifying identity.';
+    alertBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Verify Identity';
+  }
+};
+</script>
+</body>
+</html>
