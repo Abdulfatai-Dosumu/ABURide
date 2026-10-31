@@ -55,20 +55,52 @@ async def reaper_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup: Database & Reaper
     db.configure(str(DB_PATH))
     db.init()
     logger.info("Database initialised at %s", DB_PATH)
 
-    task = asyncio.create_task(reaper_loop())
+    reaper_task = asyncio.create_task(reaper_loop())
     logger.info("Hold-reaper background task started")
+
+    # Optional auto-boot Telegram bot inside the same process if token is set
+    bot_app = None
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    if bot_token:
+        try:
+            from aburide import bot as abubot
+            from telegram import Update
+            logger.info("TELEGRAM_BOT_TOKEN found; initializing embedded Telegram Bot…")
+            bot_app = abubot.create_bot_application(bot_token)
+            await bot_app.initialize()
+            await bot_app.start()
+            await bot_app.updater.start_polling(
+                allowed_updates=Update.ALL_TYPES,
+                bootstrap_retries=5,
+                timeout=30,
+            )
+            logger.info("Embedded Telegram Bot polling started successfully!")
+        except Exception as e:
+            logger.error("Failed to start embedded Telegram Bot: %s", e)
+            bot_app = None
 
     yield
 
-    # Shutdown
-    task.cancel()
+    # Shutdown: Stop embedded Telegram bot
+    if bot_app is not None:
+        try:
+            logger.info("Stopping embedded Telegram Bot…")
+            await bot_app.updater.stop()
+            await bot_app.stop()
+            await bot_app.shutdown()
+            logger.info("Embedded Telegram Bot stopped")
+        except Exception as e:
+            logger.error("Error shutting down Telegram Bot: %s", e)
+
+    # Stop reaper task
+    reaper_task.cancel()
     try:
-        await task
+        await reaper_task
     except asyncio.CancelledError:
         pass
     logger.info("Hold-reaper stopped")

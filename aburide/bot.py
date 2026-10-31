@@ -519,18 +519,8 @@ async def _on_instant_demo_topup(query, tg_id: int) -> None:
     )
 
 
-def run_bot(token: str) -> None:
-    """Start the bot with long-polling."""
-    import pathlib
-
-    # Initialise database (idempotent)
-    project_root = pathlib.Path(__file__).resolve().parent.parent
-    db_path = project_root / "aburide.db"
-    db.configure(str(db_path))
-    db.init()
-    logger.info("Database initialised at %s", db_path)
-
-    # Load stop cache
+def create_bot_application(token: str) -> Application:
+    """Construct and configure the Telegram Application instance."""
     _load_stops()
 
     # Configure resilient HTTP timeouts & connection pooling
@@ -542,7 +532,6 @@ def run_bot(token: str) -> None:
         pool_timeout=10.0,
     )
 
-    # Build application with custom network timeouts
     application = (
         Application.builder()
         .token(token)
@@ -570,6 +559,21 @@ def run_bot(token: str) -> None:
         name="notification_dispatcher",
     )
 
+    return application
+
+
+def run_bot(token: str) -> None:
+    """Start the bot with long-polling."""
+    import pathlib
+
+    # Initialise database (idempotent)
+    project_root = pathlib.Path(__file__).resolve().parent.parent
+    db_path = project_root / "aburide.db"
+    db.configure(str(db_path))
+    db.init()
+    logger.info("Database initialised at %s", db_path)
+
+    application = create_bot_application(token)
     logger.info("Bot starting long-poll…")
     application.run_polling(
         allowed_updates=Update.ALL_TYPES,
