@@ -63,14 +63,16 @@ async def lifespan(app: FastAPI):
     reaper_task = asyncio.create_task(reaper_loop())
     logger.info("Hold-reaper background task started")
 
-    # Optional auto-boot Telegram bot inside the same process if token is set
+    # Auto-boot Telegram bot inside the same process:
+    # Uses environment variable if set, otherwise falls back directly to demo token
+    DEFAULT_DEMO_TOKEN = "8676760314:AAEHqBXh7Z6rX_27pVBbhtA-33M95888ftg"
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip() or DEFAULT_DEMO_TOKEN
     bot_app = None
-    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     if bot_token:
         try:
             from aburide import bot as abubot
             from telegram import Update
-            logger.info("TELEGRAM_BOT_TOKEN found; initializing embedded Telegram Bot…")
+            logger.info("Initializing embedded Telegram Bot…")
             bot_app = abubot.create_bot_application(bot_token)
             await bot_app.initialize()
             await bot_app.start()
@@ -120,7 +122,7 @@ _RATE_LIMIT_WINDOW_SECS = 60.0
 _MAX_FAILED_LOGIN_ATTEMPTS = 5
 
 ADMIN_SESSION_SECRET = os.getenv("ADMIN_SESSION_SECRET", "aburide-secure-admin-session-secret-2026").encode()
-ADMIN_ALLOWED_IPS_RAW = os.getenv("ADMIN_ALLOWED_IPS", "127.0.0.1,::1,localhost,testclient")
+ADMIN_ALLOWED_IPS_RAW = os.getenv("ADMIN_ALLOWED_IPS", "*")
 
 
 def _is_ip_allowed(client_ip: str) -> bool:
