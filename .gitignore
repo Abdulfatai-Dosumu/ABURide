@@ -25,6 +25,8 @@ htmlcov/
 
 # Logs & temporary files
 *.log
+# Word / Office temporary lock files
+~$*
 *.tmp
 logs/
 
